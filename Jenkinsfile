@@ -1,27 +1,32 @@
 pipeline {
     agent any
 
-    triggers {
-        githubPush()
+    parameters {
+        string(name: 'TAG', defaultValue: '', description: 'Release tag to build')
     }
 
     stages {
-
         stage('Init') {
             steps {
                 script {
-                    def tag = env.GIT_TAG_NAME ?: env.TAG_NAME ?: "no-tag"
-                    currentBuild.displayName = "${tag}"
-                    currentBuild.description = "Release: ${tag}"
-                    echo "Build tagged as: ${tag}"
+                    if (!params.TAG) {
+                        error "Please provide a TAG parameter!"
+                    }
+                    currentBuild.displayName = params.TAG
+                    currentBuild.description = "Release: ${params.TAG}"
+                    echo "Build tagged as: ${params.TAG}"
                 }
             }
         }
 
         stage('Checkout') {
             steps {
-                checkout scm
-                echo "Running build for tag: ${env.GIT_TAG_NAME ?: env.TAG_NAME ?: 'unknown'}"
+                checkout([$class: 'GitSCM',
+                          branches: [[name: "refs/tags/${params.TAG}"]],
+                          doGenerateSubmoduleConfigurations: false,
+                          extensions: [[$class: 'CloneOption', noTags: false, reference: '', shallow: false]],
+                          userRemoteConfigs: [[url: 'https://github.com/muthoju-lotuswave/my-repo.git']]])
+                sh 'git fetch --tags'
             }
         }
 
@@ -41,7 +46,7 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline completed successfully for tag: ${env.GIT_TAG_NAME ?: env.TAG_NAME}"
+            echo "Pipeline completed successfully for tag: ${params.TAG}"
         }
         failure {
             echo "Pipeline failed!"
