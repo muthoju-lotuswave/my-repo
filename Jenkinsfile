@@ -1,12 +1,23 @@
 pipeline {
     agent any
 
-    // Only run this pipeline when triggered by a tag matching v*
     triggers {
         githubPush()
     }
 
     stages {
+
+        stage('Init') {
+            steps {
+                script {
+                    def tag = env.GIT_TAG_NAME ?: env.TAG_NAME ?: "no-tag"
+                    currentBuild.displayName = "${tag}"
+                    currentBuild.description = "Release: ${tag}"
+                    echo "Build tagged as: ${tag}"
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
