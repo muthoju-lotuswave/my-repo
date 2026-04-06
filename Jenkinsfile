@@ -14,7 +14,7 @@ pipeline {
             steps {
                 script {
                     // This makes the tag appear instead of build number
-                    currentBuild.displayName = "#${BUILD_NUMBER} - ${params.GIT_TAG}"
+                    currentBuild.displayName = "${params.GIT_TAG}"
                     currentBuild.description = "Built from tag: ${params.GIT_TAG}"
                 }
             }
